@@ -42,11 +42,14 @@ export async function getRates(
         checkOut: params.checkOut,
         guests: params.guests,
         nights,
-        total,
+        amount: total,
         currency: hotel.currency
-      };
+      } as unknown as RateQuote;
     }
 
-    return getRatesDb(params);
+    const quote = await getRatesDb(params);
+    if (!quote) return null;
+    const { total, ...rest } = quote;
+    return { ...rest, amount: total } as unknown as RateQuote;
   });
 }
