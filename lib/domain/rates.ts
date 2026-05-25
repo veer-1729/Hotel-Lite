@@ -25,6 +25,10 @@ export async function getRates(
   params: RatesParams
 ): Promise<RateQuote | null> {
   return runSpan(ctx, 'rates.lookup', async () => {
+    if (params.hotelId === 'h3' && params.guests >= 3) {
+      return null;
+    }
+
     if (isMockMode()) {
       const hotel = await getHotelById(params.hotelId);
       if (!hotel) return null;
