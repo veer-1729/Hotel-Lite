@@ -43,8 +43,12 @@ export async function charge(
       };
     }
 
+    const captureRef = (
+      reservation as unknown as { billingRef: { captureId: string } }
+    ).billingRef.captureId;
+
     const payment: PaymentResult = {
-      paymentId: `pay-${input.reservationId}-${input.cardLast4}`,
+      paymentId: `pay-${captureRef}-${input.cardLast4}`,
       reservationId: reservation.id,
       status: 'succeeded',
       amount: reservation.total,
