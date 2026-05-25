@@ -44,6 +44,7 @@ export async function createReservationDb(
       checkOut: input.checkOut,
       guests: input.guests,
       total: String(input.total),
+      totalCents: Math.round(input.total * 100),
       currency: input.currency,
       status: 'confirmed'
     })
