@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/api/withObservability';
 import { ensureConfigured } from '@/lib/api/ensureConfigured';
 import { getRates } from '@/lib/domain/rates';
+import { InvalidPromoCodeError } from '@/lib/domain/promotions';
 
 export async function GET(request: Request) {
   return withObservability(
@@ -16,6 +17,7 @@ export async function GET(request: Request) {
       const checkIn = searchParams.get('checkIn');
       const checkOut = searchParams.get('checkOut');
       const guestsParam = searchParams.get('guests');
+      const promoCode = searchParams.get('promoCode')?.trim() || undefined;
 
       if (!hotelId || !checkIn || !checkOut || !guestsParam) {
         return NextResponse.json(
@@ -35,16 +37,34 @@ export async function GET(request: Request) {
         );
       }
 
-      const quote = await getRates(ctx, {
-        hotelId,
-        checkIn,
-        checkOut,
-        guests
-      });
+      let quote;
+      try {
+        quote = await getRates(ctx, {
+          hotelId,
+          checkIn,
+          checkOut,
+          guests,
+          promoCode
+        });
+      } catch (error) {
+        if (error instanceof InvalidPromoCodeError) {
+          return NextResponse.json(
+            {
+              error: 'invalid_promo_code',
+              message: 'The promo code is not valid'
+            },
+            { status: 400 }
+          );
+        }
+        throw error;
+      }
 
       if (!quote) {
         return NextResponse.json(
-          { error: 'not_found', message: 'Hotel or dates invalid' },
+          {
+            error: 'not_found',
+            message: 'Hotel not found or checkOut must be after checkIn'
+          },
           { status: 404 }
         );
       }

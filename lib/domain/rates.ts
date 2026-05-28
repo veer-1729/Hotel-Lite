@@ -4,20 +4,70 @@ import { runSpan } from '@/lib/observability/trace';
 import { isMockMode } from '@/lib/config/env';
 import { getHotelById } from './hotels';
 import { getRatesDb } from '@/lib/db/queries/rates';
+import {
+  computeStayTotalCents,
+  nightsBetween,
+  roundToCents
+} from './pricing';
+import { InvalidPromoCodeError, resolvePromo } from './promotions';
 
 export type RatesParams = {
   hotelId: string;
   checkIn: string;
   checkOut: string;
   guests: number;
+  promoCode?: string;
 };
 
-function nightsBetween(checkIn: string, checkOut: string): number {
-  const start = new Date(`${checkIn}T00:00:00.000Z`).getTime();
-  const end = new Date(`${checkOut}T00:00:00.000Z`).getTime();
-  const diff = end - start;
-  if (diff <= 0) return 0;
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+function applyPromoToQuote(
+  quote: RateQuote,
+  promoCode: string | undefined
+): RateQuote {
+  const trimmed = promoCode?.trim();
+  if (!trimmed) {
+    return quote;
+  }
+
+  const promo = resolvePromo(trimmed);
+  if (!promo.valid) {
+    throw new InvalidPromoCodeError(trimmed);
+  }
+
+  const subtotal = roundToCents(quote.total);
+  const discountAmount = roundToCents(subtotal * (promo.discountPercent / 100));
+  const total = roundToCents(subtotal - discountAmount);
+
+  return {
+    ...quote,
+    subtotal,
+    discountAmount,
+    promoCode: promo.code,
+    total
+  };
+}
+
+async function buildMockQuote(params: RatesParams): Promise<RateQuote | null> {
+  const hotel = await getHotelById(params.hotelId);
+  if (!hotel) return null;
+
+  const nights = nightsBetween(params.checkIn, params.checkOut);
+  if (nights <= 0) return null;
+
+  const total = computeStayTotalCents(
+    hotel.pricePerNight,
+    nights,
+    params.guests
+  );
+
+  return {
+    hotelId: hotel.id,
+    checkIn: params.checkIn,
+    checkOut: params.checkOut,
+    guests: params.guests,
+    nights,
+    total,
+    currency: hotel.currency
+  };
 }
 
 export async function getRates(
@@ -25,28 +75,16 @@ export async function getRates(
   params: RatesParams
 ): Promise<RateQuote | null> {
   return runSpan(ctx, 'rates.lookup', async () => {
+    let quote: RateQuote | null;
+
     if (isMockMode()) {
-      const hotel = await getHotelById(params.hotelId);
-      if (!hotel) return null;
-
-      const nights = nightsBetween(params.checkIn, params.checkOut);
-      if (nights <= 0) return null;
-
-      const guestMultiplier = 1 + Math.max(0, params.guests - 2) * 0.1;
-      const total =
-        Math.round(hotel.pricePerNight * nights * guestMultiplier * 100) / 100;
-
-      return {
-        hotelId: hotel.id,
-        checkIn: params.checkIn,
-        checkOut: params.checkOut,
-        guests: params.guests,
-        nights,
-        total,
-        currency: hotel.currency
-      };
+      quote = await buildMockQuote(params);
+    } else {
+      quote = await getRatesDb(params);
     }
 
-    return getRatesDb(params);
+    if (!quote) return null;
+
+    return applyPromoToQuote(quote, params.promoCode);
   });
 }
