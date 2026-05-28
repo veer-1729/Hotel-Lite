@@ -4,12 +4,33 @@ import { withObservability } from '@/lib/api/withObservability';
 import { ensureConfigured } from '@/lib/api/ensureConfigured';
 import { requireSession } from '@/lib/api/requireSession';
 import { isMockMode } from '@/lib/config/env';
-import { charge } from '@/lib/domain/payments';
+import { charge, type PaymentDeclineReason } from '@/lib/domain/payments';
 
 const bodySchema = z.object({
   reservationId: z.string().min(1),
   cardLast4: z.string().length(4)
 });
+
+function statusForDecline(reason: PaymentDeclineReason): number {
+  switch (reason) {
+    case 'not_found':
+      return 404;
+    case 'forbidden':
+      return 403;
+    case 'amount_mismatch':
+    case 'declined':
+      return 402;
+    default:
+      return 402;
+  }
+}
+
+function errorCodeForDecline(reason: PaymentDeclineReason): string {
+  if (reason === 'amount_mismatch') {
+    return 'amount_contract_mismatch';
+  }
+  return reason;
+}
 
 export async function POST(request: Request) {
   return withObservability(
@@ -50,15 +71,12 @@ export async function POST(request: Request) {
       const outcome = await charge(ctx, parsed.data, { userId });
 
       if (!outcome.ok) {
-        const status =
-          outcome.reason === 'not_found'
-            ? 404
-            : outcome.reason === 'forbidden'
-              ? 403
-              : 402;
         return NextResponse.json(
-          { error: outcome.reason, message: outcome.message },
-          { status }
+          {
+            error: errorCodeForDecline(outcome.reason),
+            message: outcome.message
+          },
+          { status: statusForDecline(outcome.reason) }
         );
       }
 

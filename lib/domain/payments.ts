@@ -1,6 +1,7 @@
 import type { PaymentResult } from '@/lib/types';
 import type { RequestContext } from '@/lib/observability/trace';
 import { runSpan } from '@/lib/observability/trace';
+import { computeCatalogTotalForStay } from './pricing';
 import { getReservationById } from './reservations';
 
 export type ChargeInput = {
@@ -8,9 +9,17 @@ export type ChargeInput = {
   cardLast4: string;
 };
 
+export type PaymentDeclineReason =
+  | 'not_found'
+  | 'declined'
+  | 'forbidden'
+  | 'amount_mismatch';
+
 export type ChargeOutcome =
   | { ok: true; payment: PaymentResult }
-  | { ok: false; reason: 'not_found' | 'declined' | 'forbidden'; message: string };
+  | { ok: false; reason: PaymentDeclineReason; message: string };
+
+const AMOUNT_TOLERANCE_CENTS = 0.01;
 
 export async function charge(
   ctx: RequestContext,
@@ -32,6 +41,24 @@ export async function charge(
         ok: false,
         reason: 'forbidden',
         message: 'Reservation does not belong to the current user'
+      };
+    }
+
+    const expected = await computeCatalogTotalForStay({
+      hotelId: reservation.hotelId,
+      checkIn: reservation.checkIn,
+      checkOut: reservation.checkOut,
+      guests: reservation.guests
+    });
+
+    if (
+      expected != null &&
+      reservation.total < expected - AMOUNT_TOLERANCE_CENTS
+    ) {
+      return {
+        ok: false,
+        reason: 'amount_mismatch',
+        message: 'payment_total_below_expected_amount'
       };
     }
 

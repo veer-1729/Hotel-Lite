@@ -146,7 +146,7 @@ export default function ReservationsClient({ user }: { user: ReservationsUser })
     }
     setReservation(data.reservation);
     setPayment(null);
-    setMessage('Reservation saved. Complete mock payment below.');
+    setMessage('Reservation created. Complete mock payment below.');
     loadMyReservations();
   }
 
