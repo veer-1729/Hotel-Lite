@@ -34,12 +34,17 @@ export default function ReservationsClient({ user }: { user: ReservationsUser })
   const [checkIn, setCheckIn] = useState(defaultCheckIn);
   const [checkOut, setCheckOut] = useState(defaultCheckOut);
   const [guests, setGuests] = useState(2);
+  const [promoCode, setPromoCode] = useState('');
   const [cardLast4, setCardLast4] = useState('4242');
   const [quote, setQuote] = useState<RateQuote | null>(null);
   const [reservation, setReservation] = useState<Reservation | null>(null);
   const [payment, setPayment] = useState<PaymentResult | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
+
+  function clearQuote() {
+    setQuote(null);
+  }
 
   async function loadMyReservations(retry = false) {
     const res = await fetch('/api/reservations', {
@@ -88,6 +93,10 @@ export default function ReservationsClient({ user }: { user: ReservationsUser })
       checkOut,
       guests: String(guests)
     });
+    const trimmedPromo = promoCode.trim();
+    if (trimmedPromo) {
+      params.set('promoCode', trimmedPromo);
+    }
     const res = await fetch(`/api/rates?${params}`, {
       headers: requestHeaders()
     });
@@ -137,7 +146,7 @@ export default function ReservationsClient({ user }: { user: ReservationsUser })
     }
     setReservation(data.reservation);
     setPayment(null);
-    setMessage('Reservation created. Complete mock payment below.');
+    setMessage('Reservation saved. Complete mock payment below.');
     loadMyReservations();
   }
 
@@ -193,6 +202,7 @@ export default function ReservationsClient({ user }: { user: ReservationsUser })
                 </p>
                 <p className="text-muted-foreground">
                   {r.checkIn} → {r.checkOut} · {r.total} {r.currency}
+                  {r.status ? ` · ${r.status}` : ''}
                 </p>
               </div>
             ))}
@@ -210,7 +220,10 @@ export default function ReservationsClient({ user }: { user: ReservationsUser })
             <select
               className="mt-1 w-full rounded-md border px-2 py-2 text-sm"
               value={hotelId}
-              onChange={(e) => setHotelId(e.target.value)}
+              onChange={(e) => {
+                setHotelId(e.target.value);
+                clearQuote();
+              }}
             >
               {hotels.map((h) => (
                 <option key={h.id} value={h.id}>
@@ -225,7 +238,10 @@ export default function ReservationsClient({ user }: { user: ReservationsUser })
               <Input
                 type="date"
                 value={checkIn}
-                onChange={(e) => setCheckIn(e.target.value)}
+                onChange={(e) => {
+                  setCheckIn(e.target.value);
+                  clearQuote();
+                }}
               />
             </label>
             <label className="text-sm">
@@ -233,7 +249,10 @@ export default function ReservationsClient({ user }: { user: ReservationsUser })
               <Input
                 type="date"
                 value={checkOut}
-                onChange={(e) => setCheckOut(e.target.value)}
+                onChange={(e) => {
+                  setCheckOut(e.target.value);
+                  clearQuote();
+                }}
               />
             </label>
           </div>
@@ -243,16 +262,50 @@ export default function ReservationsClient({ user }: { user: ReservationsUser })
               type="number"
               min={1}
               value={guests}
-              onChange={(e) => setGuests(Number(e.target.value))}
+              onChange={(e) => {
+                setGuests(Number(e.target.value));
+                clearQuote();
+              }}
+            />
+          </label>
+          <label className="text-sm">
+            Promo code
+            <Input
+              value={promoCode}
+              placeholder="Optional"
+              onChange={(e) => {
+                setPromoCode(e.target.value);
+                clearQuote();
+              }}
             />
           </label>
           <Button type="button" onClick={fetchRates}>
             Get rates
           </Button>
           {quote && (
-            <p className="text-sm">
-              {quote.nights} night(s): {quote.total} {quote.currency}
-            </p>
+            <div className="space-y-1 text-sm">
+              <p>
+                {quote.nights} night(s) · {quote.currency}
+              </p>
+              {quote.discountAmount != null && quote.subtotal != null ? (
+                <>
+                  <p className="text-muted-foreground">
+                    Subtotal: {quote.subtotal} {quote.currency}
+                  </p>
+                  <p className="text-muted-foreground">
+                    Discount ({quote.promoCode}): −{quote.discountAmount}{' '}
+                    {quote.currency}
+                  </p>
+                  <p className="font-medium">
+                    Total: {quote.total} {quote.currency}
+                  </p>
+                </>
+              ) : (
+                <p className="font-medium">
+                  Total: {quote.total} {quote.currency}
+                </p>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>

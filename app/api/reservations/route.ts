@@ -19,6 +19,10 @@ const bodySchema = z.object({
   currency: z.string().min(1)
 });
 
+function validationErrorResponse(message: string): NextResponse {
+  return NextResponse.json({ error: 'bad_request', message }, { status: 400 });
+}
+
 export async function GET(request: Request) {
   return withObservability(
     request,
@@ -31,7 +35,10 @@ export async function GET(request: Request) {
       if (!sessionResult.ok) return sessionResult.response;
 
       const reservations = await listReservationsByUser(sessionResult.user.id);
-      return NextResponse.json({ reservations });
+      return NextResponse.json({
+        reservations,
+        count: reservations.length
+      });
     }
   );
 }
@@ -51,20 +58,13 @@ export async function POST(request: Request) {
       try {
         body = await request.json();
       } catch {
-        return NextResponse.json(
-          { error: 'bad_request', message: 'Invalid JSON body' },
-          { status: 400 }
-        );
+        return validationErrorResponse('Invalid JSON body');
       }
 
       const parsed = bodySchema.safeParse(body);
       if (!parsed.success) {
-        return NextResponse.json(
-          {
-            error: 'bad_request',
-            message: parsed.error.errors.map((e) => e.message).join('; ')
-          },
-          { status: 400 }
+        return validationErrorResponse(
+          parsed.error.errors.map((e) => e.message).join('; ')
         );
       }
 
@@ -76,7 +76,10 @@ export async function POST(request: Request) {
 
       if (!reservation) {
         return NextResponse.json(
-          { error: 'not_found', message: 'Hotel not found' },
+          {
+            error: 'not_found',
+            message: 'No hotel found for the given hotelId'
+          },
           { status: 404 }
         );
       }
