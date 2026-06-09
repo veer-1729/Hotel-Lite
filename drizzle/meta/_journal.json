@@ -8,6 +8,13 @@
       "when": 1748044800000,
       "tag": "0000_hotel_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1748476800000,
+      "tag": "0001_add_catalog_total",
+      "breakpoints": true
     }
   ]
 }

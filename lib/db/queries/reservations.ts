@@ -16,6 +16,7 @@ export type CreateReservationDbInput = {
   checkOut: string;
   guests: number;
   total: number;
+  catalogTotal?: number;
   currency: string;
 };
 
@@ -44,6 +45,7 @@ export async function createReservationDb(
       checkOut: input.checkOut,
       guests: input.guests,
       total: String(input.total),
+      catalogTotal: input.catalogTotal != null ? String(input.catalogTotal) : null,
       currency: input.currency,
       status: 'confirmed'
     })

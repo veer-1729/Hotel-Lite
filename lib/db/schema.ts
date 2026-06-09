@@ -66,6 +66,7 @@ export const reservations = pgTable('reservations', {
   checkOut: date('check_out').notNull(),
   guests: integer('guests').notNull(),
   total: numeric('total', { precision: 10, scale: 2 }).notNull(),
+  catalogTotal: numeric('catalog_total', { precision: 10, scale: 2 }),
   currency: text('currency').notNull(),
   status: reservationStatusEnum('status').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow()

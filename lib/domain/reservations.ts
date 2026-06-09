@@ -3,6 +3,7 @@ import type { RequestContext } from '@/lib/observability/trace';
 import { runSpan } from '@/lib/observability/trace';
 import { isMockMode } from '@/lib/config/env';
 import { getHotelById } from './hotels';
+import { computeCatalogTotalForStay } from './pricing';
 import {
   createReservationDb,
   getReservationByIdDb,
@@ -22,6 +23,7 @@ export type CreateReservationInput = {
   guests: number;
   total: number;
   currency: string;
+  catalogTotal?: number;
 };
 
 export async function createReservation(
@@ -29,6 +31,16 @@ export async function createReservation(
   input: CreateReservationInput
 ): Promise<Reservation | null> {
   return runSpan(ctx, 'reservations.create', async () => {
+    const catalogTotal =
+      input.catalogTotal ??
+      (await computeCatalogTotalForStay({
+        hotelId: input.hotelId,
+        checkIn: input.checkIn,
+        checkOut: input.checkOut,
+        guests: input.guests
+      })) ??
+      undefined;
+
     if (isMockMode()) {
       const hotel = await getHotelById(input.hotelId);
       if (!hotel) return null;
@@ -45,6 +57,7 @@ export async function createReservation(
         checkOut: input.checkOut,
         guests: input.guests,
         total: input.total,
+        catalogTotal,
         currency: input.currency,
         status: 'confirmed',
         createdAt: new Date().toISOString()
@@ -54,7 +67,7 @@ export async function createReservation(
       return reservation;
     }
 
-    return createReservationDb(input);
+    return createReservationDb({ ...input, catalogTotal });
   });
 }
 

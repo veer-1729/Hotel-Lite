@@ -29,6 +29,7 @@ export function mapReservation(
     checkOut: row.checkOut,
     guests: row.guests,
     total: Number(row.total),
+    catalogTotal: row.catalogTotal != null ? Number(row.catalogTotal) : undefined,
     currency: row.currency,
     status: row.status,
     createdAt: row.createdAt.toISOString()
