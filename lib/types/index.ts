@@ -33,6 +33,7 @@ export type Reservation = {
   checkOut: string;
   guests: number;
   total: number;
+  catalogTotal?: number;
   currency: string;
   status: 'pending' | 'confirmed';
   createdAt: string;

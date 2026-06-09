@@ -51,9 +51,10 @@ export async function charge(
       guests: reservation.guests
     });
 
+    const authorizedTotal = reservation.catalogTotal ?? reservation.total;
     if (
       expected != null &&
-      reservation.total < expected - AMOUNT_TOLERANCE_CENTS
+      authorizedTotal < expected - AMOUNT_TOLERANCE_CENTS
     ) {
       return {
         ok: false,
