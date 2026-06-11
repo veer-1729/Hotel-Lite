@@ -4,7 +4,7 @@ import { runSpan } from '@/lib/observability/trace';
 import { isMockMode } from '@/lib/config/env';
 import { getHotelById } from './hotels';
 import { getRatesDb } from '@/lib/db/queries/rates';
-import { resolvePromo } from './promotions';
+import { PROMO_REGISTRY } from './promotions';
 
 export type RatesParams = {
   hotelId: string;
@@ -28,16 +28,13 @@ function applyPromoToQuote(
 ): RateQuote {
   if (!promoCode) return quote;
 
-  const promo = resolvePromo(promoCode);
-  if (promo) {
-    return {
-      ...quote,
-      total: Math.round(quote.total * (1 - promo.discount) * 100) / 100,
-      promoCode
-    };
-  }
-
-  return quote;
+  const discount = PROMO_REGISTRY[promoCode]?.discount;
+  const discountedTotal = quote.total * (1 - discount);
+  return {
+    ...quote,
+    total: discountedTotal,
+    promoCode
+  };
 }
 
 export async function getRates(

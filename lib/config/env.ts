@@ -55,3 +55,7 @@ export function isAuthConfigComplete(): boolean {
   ];
   return getMissingEnvVars(authKeys).length === 0;
 }
+
+export function getPromoVersion(): string | undefined {
+  return process.env.PROMO_VERSION?.trim() || undefined;
+}
