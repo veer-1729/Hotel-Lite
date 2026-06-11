@@ -80,7 +80,7 @@ export async function createReservation(
       name: hotelName,
       city: hotelCity,
       address: { street }
-    } = hotel as HotelConfirmationDetails;
+    } = hotel as unknown as HotelConfirmationDetails;
 
     return {
       ...created,
