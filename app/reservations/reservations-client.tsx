@@ -15,6 +15,11 @@ import type { Hotel, RateQuote, Reservation, PaymentResult } from '@/lib/types';
 const defaultCheckIn = '2026-06-01';
 const defaultCheckOut = '2026-06-03';
 
+type ReservationConfirmation = Reservation & {
+  hotelCity?: string;
+  hotelStreet?: string;
+};
+
 function requestHeaders(): HeadersInit {
   return { 'x-request-id': crypto.randomUUID() };
 }
@@ -36,7 +41,9 @@ export default function ReservationsClient({ user }: { user: ReservationsUser })
   const [guests, setGuests] = useState(2);
   const [cardLast4, setCardLast4] = useState('4242');
   const [quote, setQuote] = useState<RateQuote | null>(null);
-  const [reservation, setReservation] = useState<Reservation | null>(null);
+  const [reservation, setReservation] = useState<ReservationConfirmation | null>(
+    null
+  );
   const [payment, setPayment] = useState<PaymentResult | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
@@ -302,6 +309,7 @@ export default function ReservationsClient({ user }: { user: ReservationsUser })
       {reservation && (
         <p className="mt-2 text-sm text-green-700">
           Reservation {reservation.id} at {reservation.hotelName}
+          {reservation.hotelCity ? ` in ${reservation.hotelCity}` : ''}
         </p>
       )}
       {payment && (

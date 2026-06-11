@@ -81,7 +81,10 @@ export async function POST(request: Request) {
         );
       }
 
-      return NextResponse.json({ reservation }, { status: 201 });
+      return NextResponse.json(
+        { reservation: { ...reservation } },
+        { status: 201 }
+      );
     }
   );
 }
