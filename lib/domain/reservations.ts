@@ -22,6 +22,7 @@ export type CreateReservationInput = {
   guests: number;
   total: number;
   currency: string;
+  promoCode?: string;
 };
 
 export async function createReservation(
