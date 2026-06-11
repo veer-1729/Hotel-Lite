@@ -55,3 +55,36 @@ export function isAuthConfigComplete(): boolean {
   ];
   return getMissingEnvVars(authKeys).length === 0;
 }
+
+export function getDbPoolMax(): number | undefined {
+  const raw = process.env.DB_POOL_MAX?.trim();
+  if (!raw) return undefined;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0 || !Number.isInteger(value)) {
+    return undefined;
+  }
+  return value;
+}
+
+export function getDbConfigStatus(): { DB_POOL_MAX: boolean } {
+  return {
+    DB_POOL_MAX: Boolean(process.env.DB_POOL_MAX?.trim())
+  };
+}
+
+export class DbPoolConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DbPoolConfigError';
+  }
+}
+
+export function assertDbPoolMaxConfig(): void {
+  const raw = process.env.DB_POOL_MAX?.trim();
+  if (!raw) return;
+
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0 || !Number.isInteger(value)) {
+    throw new DbPoolConfigError('DB_POOL_MAX must be a positive integer');
+  }
+}
