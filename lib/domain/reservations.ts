@@ -11,6 +11,19 @@ import {
 
 const mockReservations = new Map<string, Reservation>();
 
+type HotelConfirmationDetails = {
+  name: string;
+  city: string;
+  address: {
+    street: string;
+  };
+};
+
+export type ReservationConfirmation = Reservation & {
+  hotelCity: string;
+  hotelStreet: string;
+};
+
 export type CreateReservationInput = {
   hotelId: string;
   userId: string;
@@ -27,8 +40,10 @@ export type CreateReservationInput = {
 export async function createReservation(
   ctx: RequestContext,
   input: CreateReservationInput
-): Promise<Reservation | null> {
+): Promise<ReservationConfirmation | null> {
   return runSpan(ctx, 'reservations.create', async () => {
+    let created: Reservation | null;
+
     if (isMockMode()) {
       const hotel = await getHotelById(input.hotelId);
       if (!hotel) return null;
@@ -51,10 +66,28 @@ export async function createReservation(
       };
 
       mockReservations.set(id, reservation);
-      return reservation;
+      created = reservation;
+    } else {
+      created = await createReservationDb(input);
     }
 
-    return createReservationDb(input);
+    if (!created) return null;
+
+    const hotel = await getHotelById(input.hotelId);
+    if (!hotel) return null;
+
+    const {
+      name: hotelName,
+      city: hotelCity,
+      address: { street }
+    } = hotel as HotelConfirmationDetails;
+
+    return {
+      ...created,
+      hotelName,
+      hotelCity,
+      hotelStreet: street
+    };
   });
 }
 

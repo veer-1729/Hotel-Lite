@@ -6,6 +6,12 @@ import { hotels, reservations } from '../schema';
 import { mapReservation } from '../mappers';
 import type { Reservation } from '@/lib/types';
 
+export type CreateReservationDbResult = Reservation & {
+  hotelName: string;
+  hotelCity?: string;
+  hotelStreet?: string;
+};
+
 export type CreateReservationDbInput = {
   hotelId: string;
   userId: string;
@@ -21,7 +27,7 @@ export type CreateReservationDbInput = {
 
 export async function createReservationDb(
   input: CreateReservationDbInput
-): Promise<Reservation | null> {
+): Promise<CreateReservationDbResult | null> {
   const db = getDb();
   const hotelRows = await db
     .select()

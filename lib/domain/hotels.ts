@@ -42,6 +42,9 @@ export async function searchHotels(
   });
 }
 
+/**
+ * Look up one hotel from the active catalog by id.
+ */
 export async function getHotelById(hotelId: string): Promise<Hotel | null> {
   if (isMockMode()) {
     return HOTEL_CATALOG.find((h) => h.id === hotelId) ?? null;
