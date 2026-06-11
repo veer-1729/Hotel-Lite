@@ -63,6 +63,11 @@ export type HealthResponse = {
       status: HealthCheckStatus;
       latency_ms?: number;
       message?: string;
+      pool?: {
+        total: number;
+        idle: number;
+        waiting: number;
+      };
     };
     auth: {
       status: HealthCheckStatus;

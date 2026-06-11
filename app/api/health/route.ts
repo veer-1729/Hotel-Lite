@@ -6,7 +6,7 @@ import {
   isAuthConfigComplete,
   isMockMode
 } from '@/lib/config/env';
-import { pingDatabase } from '@/lib/db';
+import { pingDatabase, getPoolStats } from '@/lib/db';
 import type { HealthResponse } from '@/lib/types';
 
 export async function GET(request: Request) {
@@ -43,9 +43,15 @@ export async function GET(request: Request) {
 
       try {
         const ping = await pingDatabase();
+        const pool = getPoolStats();
         databaseStatus = {
           status: 'ok',
-          latency_ms: ping.latencyMs
+          latency_ms: ping.latencyMs,
+          pool: {
+            total: pool.totalCount,
+            idle: pool.idleCount,
+            waiting: pool.waitingCount
+          }
         };
       } catch (error) {
         databaseStatus = {
