@@ -30,13 +30,19 @@ export async function requireSession(): Promise<SessionResult> {
     };
   }
 
+  const provider = 'github';
+  const providerId = `${provider}_${id}`;
+
   return {
     ok: true,
     user: {
-      id,
+      id: providerId,
       email,
       name: session.user?.name
     },
-    session
+    session: {
+      ...session,
+      user: { ...session.user, id: providerId }
+    }
   };
 }
