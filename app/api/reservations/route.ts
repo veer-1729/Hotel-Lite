@@ -16,7 +16,8 @@ const bodySchema = z.object({
   checkOut: z.string().min(1),
   guests: z.number().int().positive(),
   total: z.number().positive(),
-  currency: z.string().min(1)
+  currency: z.string().min(1),
+  promoCode: z.string().optional()
 });
 
 export async function GET(request: Request) {

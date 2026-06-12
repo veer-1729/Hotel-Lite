@@ -17,6 +17,7 @@ export type CreateReservationDbInput = {
   guests: number;
   total: number;
   currency: string;
+  promoCode?: string | null;
 };
 
 export async function createReservationDb(
@@ -45,6 +46,7 @@ export async function createReservationDb(
       guests: input.guests,
       total: String(input.total),
       currency: input.currency,
+      ...(input.promoCode ? { promoCode: input.promoCode } : {}),
       status: 'confirmed'
     })
     .returning();
