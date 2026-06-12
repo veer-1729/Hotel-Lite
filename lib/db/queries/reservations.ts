@@ -2,7 +2,7 @@ import 'server-only';
 
 import { desc, eq } from 'drizzle-orm';
 import { getDb } from '../index';
-import { hotels, reservations } from '../schema';
+import { hotels, reservations, type SelectReservation } from '../schema';
 import { mapReservation } from '../mappers';
 import type { Reservation } from '@/lib/types';
 
@@ -68,6 +68,33 @@ export async function getReservationByIdDb(
   const row = rows[0];
   if (!row) return null;
   return mapReservation(row.reservation, row.hotelName);
+}
+
+export type ReservationWithHotel = {
+  reservation: SelectReservation;
+  hotelName: string;
+};
+
+export async function getReservationWithHotel(
+  id: string
+): Promise<ReservationWithHotel | null> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      reservation: reservations,
+      hotelName: hotels.name
+    })
+    .from(reservations)
+    .innerJoin(hotels, eq(reservations.hotelId, hotels.id))
+    .where(eq(reservations.id, id));
+
+  const row = rows[0];
+  if (!row) return null;
+
+  return {
+    reservation: row.reservation,
+    hotelName: row.hotelName
+  };
 }
 
 export async function listReservationsByUserDb(

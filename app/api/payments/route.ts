@@ -62,7 +62,7 @@ export async function POST(request: Request) {
         );
       }
 
-      return NextResponse.json(outcome.payment);
+      return NextResponse.json({ ...outcome.payment });
     }
   );
 }

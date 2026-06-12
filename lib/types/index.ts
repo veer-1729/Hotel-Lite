@@ -41,6 +41,12 @@ export type PaymentResult = {
   status: 'succeeded' | 'declined';
   amount: number;
   currency: string;
+  confirmationId?: string;
+  totalPaid?: string;
+  hotelName?: string;
+  checkIn?: string;
+  checkOut?: string;
+  confirmationStatus?: 'confirmed';
 };
 
 export type ApiError = {
