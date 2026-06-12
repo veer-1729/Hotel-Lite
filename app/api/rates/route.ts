@@ -16,6 +16,7 @@ export async function GET(request: Request) {
       const checkIn = searchParams.get('checkIn');
       const checkOut = searchParams.get('checkOut');
       const guestsParam = searchParams.get('guests');
+      const promoCode = searchParams.get('promoCode') ?? undefined;
 
       if (!hotelId || !checkIn || !checkOut || !guestsParam) {
         return NextResponse.json(
@@ -39,7 +40,8 @@ export async function GET(request: Request) {
         hotelId,
         checkIn,
         checkOut,
-        guests
+        guests,
+        promoCode
       });
 
       if (!quote) {

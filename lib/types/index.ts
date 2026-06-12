@@ -17,6 +17,8 @@ export type RateQuote = {
   nights: number;
   total: number;
   currency: string;
+  promoCode?: string;
+  discountAmount?: number;
 };
 
 export type Reservation = {
