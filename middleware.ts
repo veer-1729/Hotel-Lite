@@ -1,6 +1,8 @@
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 
+// Public pages: /, /search, /login. API routes handle auth in route handlers.
+// App pages requiring sign-in: /reservations, /products, /customers (dashboard).
 const publicPaths = new Set(['/', '/search', '/login']);
 
 export default auth((req) => {

@@ -55,3 +55,14 @@ export function isAuthConfigComplete(): boolean {
   ];
   return getMissingEnvVars(authKeys).length === 0;
 }
+
+export function getAuthProviders(): string {
+  return process.env.AUTH_PROVIDERS?.trim() || 'github';
+}
+
+export function getAuthProvidersList(): string[] {
+  return getAuthProviders()
+    .split(',')
+    .map((provider) => provider.trim())
+    .filter(Boolean);
+}
