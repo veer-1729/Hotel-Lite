@@ -65,6 +65,7 @@ export const reservations = pgTable('reservations', {
   checkIn: date('check_in').notNull(),
   checkOut: date('check_out').notNull(),
   guests: integer('guests').notNull(),
+  // Postgres NUMERIC is returned as string by the driver/Drizzle.
   total: numeric('total', { precision: 10, scale: 2 }).notNull(),
   currency: text('currency').notNull(),
   status: reservationStatusEnum('status').notNull(),

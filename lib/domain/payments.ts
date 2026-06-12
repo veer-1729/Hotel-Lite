@@ -4,7 +4,7 @@ import { runSpan } from '@/lib/observability/trace';
 import { isMockMode } from '@/lib/config/env';
 import type { SelectReservation } from '@/lib/db/schema';
 import { getReservationWithHotel } from '@/lib/db/queries/reservations';
-import { getReservationById } from './reservations';
+import { getReservationById, getReservationForConfirmation } from './reservations';
 
 export type ChargeInput = {
   reservationId: string;
@@ -104,6 +104,8 @@ export async function charge(
         message: 'Card declined (mock)'
       };
     }
+
+    await getReservationForConfirmation(input.reservationId);
 
     const paymentId = `pay-${input.reservationId}-${input.cardLast4}`;
     const payment = buildPaymentConfirmation(

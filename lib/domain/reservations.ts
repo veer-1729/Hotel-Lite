@@ -6,6 +6,7 @@ import { getHotelById } from './hotels';
 import {
   createReservationDb,
   getReservationByIdDb,
+  getReservationWithHotel,
   listReservationsByUserDb
 } from '@/lib/db/queries/reservations';
 
@@ -86,4 +87,30 @@ export async function getReservationForUser(
   if (!reservation) return null;
   if (reservation.userId !== userId) return null;
   return reservation;
+}
+
+function formatConfirmationDate(value: string): string {
+  return new Date(`${value}T00:00:00.000Z`).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC'
+  });
+}
+
+export async function getReservationForConfirmation(id: string) {
+  if (isMockMode()) {
+    return null;
+  }
+
+  const record = await getReservationWithHotel(id);
+  if (!record) {
+    return null;
+  }
+
+  return {
+    hotelName: record.hotelName,
+    formattedCheckIn: formatConfirmationDate(String(record.reservation.checkIn)),
+    formattedCheckOut: formatConfirmationDate(String(record.reservation.checkOut))
+  };
 }
